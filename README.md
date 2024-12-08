@@ -2,6 +2,10 @@
 
 This is a demo Flutter app that fetches radio stations from the [Radio Browser API](https://www.radio-browser.info/) and allows users to listen to them and save favorites. The app is designed for both iOS and Android platforms.
 
+## YouTube demo
+
+A [demo video](https://youtube.com/shorts/JR9I0tVB_o4) has been provided showing the main functionalities of the app.
+
 ## Features
 
 - Fetch and display radio stations from around the world.
