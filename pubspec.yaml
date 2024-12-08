@@ -102,11 +102,6 @@ flutter:
   # example:
   
   fonts:
-  - family: Google Sans
-    fonts:
-      - asset: assets/fonts/GoogleSans/GoogleSans-Regular.ttf
-      - asset: assets/fonts/GoogleSans/GoogleSans-Medium.ttf
-      - asset: assets/fonts/GoogleSans/GoogleSans-Bold.ttf
   - family: Outfit
     fonts:
       - asset: assets/fonts/Outfit/Outfit-Variable.ttf
