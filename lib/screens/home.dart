@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:radiostations/components/country_tile.dart';
 import 'package:radiostations/components/station_tile.dart';
-import 'package:radiostations/models/favorites.dart';
+import 'package:radiostations/providers/favorites.dart';
 import 'package:radiostations/services/api.dart';
 import 'package:radiostations/components/app_bar.dart';
 import 'package:radiostations/components/tap_scale.dart';
@@ -20,7 +20,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const int limit = 20;
+  static const int limit = 15;
 
   final PageController pageController = PageController();
   final ScrollController countriesScrollController = ScrollController(), favoritesScrollController = ScrollController();

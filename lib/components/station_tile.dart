@@ -3,7 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:radiostations/components/shimmer.dart';
 import 'package:radiostations/components/tap_scale.dart';
-import 'package:radiostations/models/favorites.dart';
+import 'package:radiostations/providers/favorites.dart';
 import 'package:radiostations/models/station.dart';
 import 'package:radiostations/services/router.dart';
 import 'package:radiostations/theme.dart';

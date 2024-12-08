@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:radiostations/components/app_bar.dart';
 import 'package:radiostations/components/tap_scale.dart';
 import 'package:radiostations/components/volume_slider.dart';
-import 'package:radiostations/models/favorites.dart';
+import 'package:radiostations/providers/favorites.dart';
 import 'package:radiostations/models/station.dart';
 import 'package:radiostations/services/router.dart';
 import 'package:radiostations/services/storage.dart';

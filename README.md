@@ -1,16 +1,47 @@
-# radiostations
+# Radio Stations Demo App
 
-A new Flutter project.
+This is a demo Flutter app that fetches radio stations from the [Radio Browser API](https://www.radio-browser.info/) and allows users to listen to them and save favorites. The app is designed for both iOS and Android platforms.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- Fetch and display radio stations from around the world.
+- Stream live radio stations.
+- Save favorite stations for easy access.
 
-A few resources to get you started if this is your first Flutter project:
+## Requirements
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- **Flutter Version**: 3.22.3
+- **Platforms**: iOS and Android
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Setup
+
+1. **Clone the Repository**:
+   ```bash
+   git clone <repository_url>
+   cd <repository_folder>
+   ```
+
+2. **Install Dependencies**:
+   ```bash
+   flutter pub get
+   ```
+
+3. **Run the App**:
+   - For Android & iOS:
+     ```bash
+     flutter run
+     ```
+
+## Testing the App
+
+Explore the following features:
+
+1. Browse countries from the home page, with paginated lists.
+2. Select a country and browse the available radio stations, also paginated.
+3. Play a radio station to test streaming functionality.
+4. Add stations to favorites and verify persistence.
+5. Access favorite stations from the home page.
+
+## API Used
+
+This app uses the [Radio Browser API](https://www.radio-browser.info/), a free service that provides access to radio station data worldwide.

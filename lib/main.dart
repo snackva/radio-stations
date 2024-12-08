@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:radiostations/models/favorites.dart';
+import 'package:radiostations/providers/favorites.dart';
 import 'package:radiostations/services/router.dart';
 import 'package:radiostations/services/storage.dart';
 import 'package:radiostations/theme.dart';
