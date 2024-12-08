@@ -108,7 +108,7 @@ class StationTile extends StatelessWidget {
                       switchOutCurve: Curves.fastOutSlowIn.flipped,
                       transitionBuilder: (child, animation) {
                         return ScaleTransition(
-                          scale: Tween<double>(begin: 0.5, end: 1).animate(animation),
+                          scale: Tween<double>(begin: 0.75, end: 1).animate(animation),
                           child: FadeTransition(
                             opacity: animation,
                             child: child,

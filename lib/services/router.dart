@@ -27,7 +27,6 @@ class RouterService {
   static const String homePath = '/';
   static const String stationsPath = '/stations';
   static const String playerPath = '/player';
-  static const String settingsPath = '/settings';
 
   static final Map<String, WidgetBuilder Function(Object? arguments)> _builders = {
     homePath: (_) => (context) => const HomeScreen(),
@@ -105,7 +104,7 @@ class FadeZoomPageRoute extends MaterialPageRoute {
   });
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 500);
+  Duration get transitionDuration => AppTheme.slowAnimationDuration;
 
   @override
   Color? get barrierColor => Colors.transparent;

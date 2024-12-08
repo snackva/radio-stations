@@ -35,7 +35,7 @@ class AppTheme {
 
   // Animations
   static Duration get standardAnimationDuration => const Duration(milliseconds: 250);
-  static Duration get slowAnimationDuration => const Duration(milliseconds: 500);
+  static Duration get slowAnimationDuration => const Duration(milliseconds: 450);
   static Curve get standardAnimationCurve => Curves.fastOutSlowIn;
 
   static ThemeData get data => ThemeData(

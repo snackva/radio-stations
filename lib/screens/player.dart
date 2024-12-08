@@ -14,6 +14,7 @@ import 'package:radiostations/models/station.dart';
 import 'package:radiostations/services/router.dart';
 import 'package:radiostations/services/storage.dart';
 import 'package:radiostations/theme.dart';
+import 'package:text_scroll/text_scroll.dart';
 
 class PlayerScreenArguments {
   final Station station;
@@ -182,37 +183,38 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: StreamBuilder(
-                  stream: player.icyMetadataStream,
-                  builder: (context, snapshot) {
-                    final String title = snapshot.data?.info?.title ?? '';
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: StreamBuilder(
+                stream: player.icyMetadataStream,
+                builder: (context, snapshot) {
+                  final String title = snapshot.data?.info?.title ?? '';
 
-                    return AnimatedSwitcher(
-                      duration: AppTheme.standardAnimationDuration,
-                      switchInCurve: Curves.fastOutSlowIn,
-                      switchOutCurve: Curves.fastOutSlowIn.flipped,
-                      transitionBuilder: (child, animation) {
-                        return ScaleTransition(
-                          alignment: Alignment.centerLeft,
-                          scale: Tween<double>(begin: 0.5, end: 1).animate(animation),
-                          child: FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: Text(
-                        key: ValueKey(title),
-                        title,
-                        style: AppTheme.titleMediumStyle,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    );
-                  },
-                ),
+                  return AnimatedSwitcher(
+                    duration: AppTheme.standardAnimationDuration,
+                    switchInCurve: Curves.fastOutSlowIn,
+                    switchOutCurve: Curves.fastOutSlowIn.flipped,
+                    transitionBuilder: (child, animation) {
+                      return ScaleTransition(
+                        alignment: Alignment.centerLeft,
+                        scale: Tween<double>(begin: 0.75, end: 1).animate(animation),
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: TextScroll(
+                      key: ValueKey(title),
+                      ' $title       ',
+                      delayBefore: const Duration(seconds: 1),
+                      pauseBetween: const Duration(seconds: 2),
+                      style: AppTheme.titleMediumStyle,
+                      textAlign: TextAlign.left,
+                      fadedBorder: true,
+                      fadedBorderWidth: 8 / AppTheme.screenWidth,
+                    ),
+                  );
+                },
               ),
             ),
             Expanded(
@@ -239,7 +241,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                                   switchOutCurve: Curves.fastOutSlowIn.flipped,
                                   transitionBuilder: (child, animation) {
                                     return ScaleTransition(
-                                      scale: Tween<double>(begin: 0.5, end: 1).animate(animation),
+                                      scale: Tween<double>(begin: 0.75, end: 1).animate(animation),
                                       child: FadeTransition(
                                         opacity: animation,
                                         child: child,
@@ -272,7 +274,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                                   switchOutCurve: Curves.fastOutSlowIn.flipped,
                                   transitionBuilder: (child, animation) {
                                     return ScaleTransition(
-                                      scale: Tween<double>(begin: 0.5, end: 1).animate(animation),
+                                      scale: Tween<double>(begin: 0.75, end: 1).animate(animation),
                                       child: FadeTransition(
                                         opacity: animation,
                                         child: child,
