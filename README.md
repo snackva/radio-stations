@@ -6,6 +6,10 @@ This is a demo Flutter app that fetches radio stations from the [Radio Browser A
 
 A [demo video](https://youtube.com/shorts/JR9I0tVB_o4) has been provided showing the main functionalities of the app.
 
+## Design
+
+The app aesthetics have been inspired by [this Dribbble design](https://dribbble.com/shots/24479926-UI-Exploration-Online-Radio), giving it a minimalistic look with a red accent color.
+
 ## Features
 
 - Fetch and display radio stations from around the world.
