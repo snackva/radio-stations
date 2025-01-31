@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:radiostations/components/search_button.dart';
 import 'package:radiostations/components/station_tile.dart';
 import 'package:radiostations/services/api.dart';
 import 'package:radiostations/components/app_bar.dart';
@@ -36,6 +37,10 @@ class _StationsScreenState extends State<StationsScreen> {
 
   final ScrollController stationsScrollController = ScrollController();
 
+  String searchPrevious = '';
+  final TextEditingController searchController = TextEditingController();
+  final FocusNode searchFocus = FocusNode();
+
   final ValueNotifier<List<Station>> stationsNotifier = ValueNotifier([]);
   bool ongoingStationsRequest = false, canFetchMoreStations = true;
 
@@ -43,8 +48,13 @@ class _StationsScreenState extends State<StationsScreen> {
     if (ongoingStationsRequest || !canFetchMoreStations) return;
     ongoingStationsRequest = true;
 
-    if (stationsScrollController.position.pixels + AppTheme.screenHeight >= stationsScrollController.position.maxScrollExtent) {
-      final List<Station>? stations = await ApiService().countryStations(country: widget.country, limit: limit, offset: stationsNotifier.value.length);
+    if (stationsScrollController.hasClients && (stationsScrollController.position.pixels + AppTheme.screenHeight >= stationsScrollController.position.maxScrollExtent || stationsNotifier.value.isEmpty)) {
+      final List<Station>? stations = await ApiService().countryStations(
+        country: widget.country,
+        nameContent: searchController.text,
+        limit: limit,
+        offset: stationsNotifier.value.length,
+      );
 
       if (stations != null) {
         stationsNotifier.value = [...stationsNotifier.value, ...stations];
@@ -57,9 +67,20 @@ class _StationsScreenState extends State<StationsScreen> {
     ongoingStationsRequest = false;
   }
 
+  void searchFocusListener() {
+    if (!searchFocus.hasFocus && searchController.text != searchPrevious) {
+      stationsNotifier.value = [];
+      canFetchMoreStations = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => fetchStations());
+    }
+
+    searchPrevious = searchController.text;
+  }
+
   @override
   void initState() {
-    stationsScrollController.addListener(() => fetchStations());
+    stationsScrollController.addListener(fetchStations);
+    searchFocus.addListener(searchFocusListener);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => fetchStations());
 
@@ -67,9 +88,20 @@ class _StationsScreenState extends State<StationsScreen> {
   }
 
   @override
+  void dispose() {
+    stationsScrollController.removeListener(fetchStations);
+    searchFocus.removeListener(searchFocusListener);
+    searchController.dispose();
+    stationsNotifier.dispose();
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: false,
       appBar: CustomAppBar(
         scrollController: stationsScrollController,
         content: Padding(
@@ -81,6 +113,11 @@ class _StationsScreenState extends State<StationsScreen> {
           ),
         ),
         buttons: [
+          SearchButton(
+            hint: 'Search for a station...',
+            textEditingController: searchController,
+            focusNode: searchFocus,
+          ),
           AppBarButton(
             iconAsset: 'assets/icons/x.svg',
             onPressed: () => RouterService().pop(),
@@ -98,22 +135,32 @@ class _StationsScreenState extends State<StationsScreen> {
                 child: child,
               );
             },
-            child: ListView.separated(
-              controller: stationsScrollController,
-              padding: EdgeInsets.fromLTRB(
-                16,
-                AppTheme.statusBarHeight + CustomAppBar.height + 32,
-                16,
-                max(16, AppTheme.bottomPadding),
-              ),
-              itemCount: stations.length + (canFetchMoreStations ? limit : 0),
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final Station? station = index < stations.length ? stations[index] : null;
+            child: stations.isEmpty && !canFetchMoreStations
+                ? Center(
+                    child: Text(
+                      'No stations available',
+                      style: AppTheme.subtitleStyle,
+                    ),
+                  )
+                : ListView.separated(
+                    controller: stationsScrollController,
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      AppTheme.statusBarHeight + CustomAppBar.height + 32,
+                      16,
+                      max(16, AppTheme.bottomPadding),
+                    ),
+                    itemCount: stations.length + (canFetchMoreStations ? limit : 0),
+                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final Station? station = index < stations.length ? stations[index] : null;
 
-                return StationTile(station: station);
-              },
-            ),
+                      return StationTile(
+                        station: station,
+                        scrollController: stationsScrollController,
+                      );
+                    },
+                  ),
           );
         },
       ),

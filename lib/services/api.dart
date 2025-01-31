@@ -28,9 +28,9 @@ class ApiService {
     }
   }
 
-  Future<List<Station>?> countryStations({required Country country, int limit = 10, int offset = 0}) async {
+  Future<List<Station>?> countryStations({required Country country, int limit = 10, int offset = 0, String nameContent = ''}) async {
     final response = await _client.get(
-      Uri.parse('$_baseUrl/stations/bycountrycodeexact/${country.code}?limit=$limit&offset=$offset'),
+      Uri.parse('$_baseUrl/stations/search?countrycode=${country.code}${nameContent.isNotEmpty ? '&name=$nameContent' : ''}&limit=$limit&offset=$offset'),
     );
 
     if (response.statusCode == 200) {

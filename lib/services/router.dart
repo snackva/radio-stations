@@ -2,13 +2,13 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:radiostations/models/country.dart';
 import 'package:radiostations/models/station.dart';
 import 'package:radiostations/screens/home.dart';
 import 'package:radiostations/screens/player.dart';
 import 'package:radiostations/screens/stations.dart';
 import 'package:radiostations/theme.dart';
-import 'package:vector_math/vector_math_64.dart' as math;
 
 class RouterService {
   static final RouterService _instance = RouterService._internal();
@@ -130,7 +130,7 @@ class FadeZoomTransition extends StatelessWidget {
     required this.source,
     required this.child,
   })  : sizeAnimation = CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn, reverseCurve: Curves.fastOutSlowIn.flipped),
-        radiusAnimation = CurvedAnimation(parent: ReverseAnimation(animation), curve: const Interval(0.9, 1, curve: Curves.easeOut), reverseCurve: Interval(0.9, 1, curve: Curves.easeOut.flipped)),
+        radiusAnimation = CurvedAnimation(parent: animation, curve: const Interval(0.8, 1, curve: Curves.easeOut), reverseCurve: Interval(0.8, 1, curve: Curves.easeOut.flipped)),
         sourceAnimation = CurvedAnimation(parent: ReverseAnimation(animation), curve: const Interval(0.4, 1, curve: Curves.easeInOut)),
         destinationAnimation = CurvedAnimation(parent: animation, curve: const Interval(0.4, 1, curve: Curves.easeInOut));
 
@@ -138,116 +138,119 @@ class FadeZoomTransition extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ValueNotifier<Offset> translationNotifier = ValueNotifier(Offset.zero);
+
     return Material(
       color: Colors.transparent,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          ListenableBuilder(
-            listenable: sizeAnimation,
-            builder: (context, child) {
-              final double scale = lerpDouble(1, FadeZoomTransition.scale, sizeAnimation.value)!;
+      child: GestureDetector(
+        onPanUpdate: (details) {
+          translationNotifier.value += details.delta;
+        },
+        onPanEnd: (details) {
+          if (translationNotifier.value.distance > 200 || (translationNotifier.value.distance > 100 && details.velocity.pixelsPerSecond.distance > 0)) {
+            RouterService().pop();
+          } else {
+            final Offset initialTranslation = translationNotifier.value, finalTranslation = Offset.zero;
+            late Ticker cancelPopTicker;
 
-              return BackdropFilter(
-                filter: ImageFilter.matrix(Matrix4.compose(
-                  math.Vector3(AppTheme.screenWidth * 0.5 * (1 - scale), AppTheme.screenHeight * 0.5 * (1 - scale), 0),
-                  math.Quaternion.identity(),
-                  math.Vector3(scale, scale, 1),
-                ).storage),
-                child: ClipPath(
-                    clipper: _FadeZoomTransitionBackgroundClipper(
-                      sizeAnimation: sizeAnimation,
-                      radiusAnimation: radiusAnimation,
-                    ),
-                    child: child),
-              );
-            },
-            child: ColoredBox(color: AppTheme.backgroundColor),
-          ),
-          ListenableBuilder(
-            listenable: sizeAnimation,
-            builder: (context, child) {
-              return Positioned(
-                left: lerpDouble(source.offset.dx, 0, sizeAnimation.value),
-                top: lerpDouble(source.offset.dy, 0, sizeAnimation.value),
-                width: lerpDouble(source.size.width, AppTheme.screenWidth, sizeAnimation.value),
-                height: lerpDouble(source.size.height, AppTheme.screenHeight, sizeAnimation.value),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(lerpDouble(radius, 0, radiusAnimation.value)!),
-                  child: child!,
-                ),
-              );
-            },
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ColoredBox(color: AppTheme.backgroundColor),
-                FadeTransition(
-                  opacity: destinationAnimation,
-                  child: FittedBox(
-                    fit: BoxFit.fill,
-                    child: SizedBox.fromSize(
-                      size: Size(AppTheme.screenWidth, AppTheme.screenHeight),
-                      child: child,
+            cancelPopTicker = Ticker((elapsed) {
+              final double elapsedFraction = elapsed.inMilliseconds / AppTheme.standardAnimationDuration.inMilliseconds;
+
+              if (elapsedFraction < 1) {
+                translationNotifier.value = Offset.lerp(
+                  initialTranslation,
+                  finalTranslation,
+                  AppTheme.standardAnimationCurve.transform(elapsedFraction),
+                )!;
+              } else {
+                translationNotifier.value = finalTranslation;
+                cancelPopTicker.stop();
+              }
+            })
+              ..start();
+          }
+        },
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned(
+              left: source.offset.dx,
+              top: source.offset.dy,
+              width: source.size.width,
+              height: source.size.height,
+              child: ColoredBox(color: AppTheme.backgroundColor),
+            ),
+            ListenableBuilder(
+              listenable: sizeAnimation,
+              builder: (context, child) {
+                return BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16 * sizeAnimation.value, sigmaY: 16 * sizeAnimation.value),
+                  child: child,
+                );
+              },
+              child: FadeTransition(
+                opacity: sizeAnimation,
+                child: ColoredBox(color: Color.alphaBlend(AppTheme.backgroundColor.withOpacity(0.9), AppTheme.surfaceColor)),
+              ),
+            ),
+            ListenableBuilder(
+              listenable: Listenable.merge([sizeAnimation, translationNotifier]),
+              builder: (context, child) {
+                return Positioned(
+                  left: lerpDouble(source.offset.dx, translationNotifier.value.dx / 2, sizeAnimation.value),
+                  top: lerpDouble(source.offset.dy, translationNotifier.value.dy / 2, sizeAnimation.value),
+                  width: lerpDouble(source.size.width, AppTheme.screenWidth, sizeAnimation.value),
+                  height: lerpDouble(source.size.height, AppTheme.screenHeight, sizeAnimation.value),
+                  child: Transform.scale(
+                    scale: 1 - translationNotifier.value.distance / 5 / AppTheme.screenWidth,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(lerpDouble(radius, translationNotifier.value.distance > 0 ? radius : 0, radiusAnimation.value)!),
+                      child: child!,
                     ),
                   ),
-                ),
-              ],
+                );
+              },
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ColoredBox(color: AppTheme.backgroundColor),
+                  FadeTransition(
+                    opacity: destinationAnimation,
+                    child: FittedBox(
+                      fit: BoxFit.fill,
+                      child: SizedBox.fromSize(
+                        size: Size(AppTheme.screenWidth, AppTheme.screenHeight),
+                        child: child,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          ListenableBuilder(
-            listenable: sizeAnimation,
-            builder: (context, child) {
-              return Positioned(
-                left: source.offset.dx,
-                top: lerpDouble(source.offset.dy, (AppTheme.screenHeight - source.size.height) / 2, sizeAnimation.value),
-                child: child!,
-              );
-            },
-            child: IgnorePointer(
-              child: FadeTransition(
-                opacity: sourceAnimation,
-                child: FittedBox(
-                  child: SizedBox.fromSize(
-                    size: source.size,
-                    child: source.child,
+            ListenableBuilder(
+              listenable: sizeAnimation,
+              builder: (context, child) {
+                return Positioned(
+                  left: source.offset.dx,
+                  top: lerpDouble(source.offset.dy, (AppTheme.screenHeight - source.size.height) / 2, sizeAnimation.value),
+                  child: child!,
+                );
+              },
+              child: IgnorePointer(
+                child: FadeTransition(
+                  opacity: sourceAnimation,
+                  child: FittedBox(
+                    child: SizedBox.fromSize(
+                      size: source.size,
+                      child: source.child,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-}
-
-class _FadeZoomTransitionBackgroundClipper extends CustomClipper<Path> {
-  final Animation<double> sizeAnimation, radiusAnimation;
-
-  _FadeZoomTransitionBackgroundClipper({
-    required this.sizeAnimation,
-    required this.radiusAnimation,
-  }) : super(reclip: Listenable.merge([sizeAnimation, radiusAnimation]));
-
-  @override
-  Path getClip(Size size) {
-    Path outerPath = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
-
-    Path innerPath = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          lerpDouble(0, size.width * 0.5 * (1 - FadeZoomTransition.scale), sizeAnimation.value)!,
-          lerpDouble(0, size.height * 0.5 * (1 - FadeZoomTransition.scale), sizeAnimation.value)!,
-          lerpDouble(size.width, size.width * FadeZoomTransition.scale, sizeAnimation.value)!,
-          lerpDouble(size.height, size.height * FadeZoomTransition.scale, sizeAnimation.value)!,
-        ),
-        Radius.circular(lerpDouble(FadeZoomTransition.radius, 0, radiusAnimation.value)!),
-      ));
-
-    return Path.combine(PathOperation.difference, outerPath, innerPath);
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => true;
 }

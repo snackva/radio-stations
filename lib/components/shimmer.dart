@@ -110,18 +110,6 @@ class _ShimmerState extends State<Shimmer> with TickerProviderStateMixin {
   late final CurvedAnimation loadingAnimation, loadedAnimation;
   late final Widget shimmerWidget;
 
-  bool disposed = false;
-
-  void _dispose() {
-    loadingAnimationController.dispose();
-    loadingAnimation.dispose();
-
-    loadedAnimationController.dispose();
-    loadedAnimation.dispose();
-
-    disposed = true;
-  }
-
   Future<void> _onLoaded() async {
     loadingAnimationController.stop();
 
@@ -130,15 +118,23 @@ class _ShimmerState extends State<Shimmer> with TickerProviderStateMixin {
     } else {
       loadedAnimationController.value = 1;
     }
+  }
 
-    _dispose();
+  Future<void> _onUnloaded() async {
+    loadingAnimationController.repeat(reverse: true);
+
+    if (widget.animate) {
+      await loadedAnimationController.reverse();
+    } else {
+      loadedAnimationController.value = 0;
+    }
   }
 
   @override
   void initState() {
     super.initState();
 
-    loadingAnimationController = (AnimationController(vsync: this, duration: const Duration(seconds: 1))..value = Random().nextDouble())..repeat(reverse: true);
+    loadingAnimationController = (AnimationController(vsync: this, duration: const Duration(seconds: 1))..value = Random().nextDouble());
     loadedAnimationController = AnimationController(vsync: this, duration: AppTheme.standardAnimationDuration);
     loadingAnimation = CurvedAnimation(parent: loadingAnimationController, curve: Curves.easeInOut);
     loadedAnimation = CurvedAnimation(parent: loadedAnimationController, curve: Curves.easeInOut);
@@ -153,14 +149,21 @@ class _ShimmerState extends State<Shimmer> with TickerProviderStateMixin {
 
   @override
   void didUpdateWidget(covariant Shimmer oldWidget) {
-    if (!widget.enabled && oldWidget.enabled) _onLoaded();
+    if (widget.enabled) {
+      _onUnloaded();
+    } else {
+      _onLoaded();
+    }
 
     super.didUpdateWidget(oldWidget);
   }
 
   @override
   void dispose() {
-    if (!disposed) _dispose();
+    loadingAnimationController.dispose();
+    loadingAnimation.dispose();
+    loadedAnimationController.dispose();
+    loadedAnimation.dispose();
 
     super.dispose();
   }

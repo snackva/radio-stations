@@ -35,8 +35,11 @@ class _HomeScreenState extends State<HomeScreen> {
     if (ongoingCountriesRequest || !canFetchMoreCountries) return;
     ongoingCountriesRequest = true;
 
-    if (countriesScrollController.position.pixels + AppTheme.screenHeight >= countriesScrollController.position.maxScrollExtent) {
-      final List<Country>? countries = await ApiService().countries(limit: limit, offset: countriesNotifier.value.length);
+    if (countriesScrollController.hasClients && (countriesScrollController.position.pixels + AppTheme.screenHeight >= countriesScrollController.position.maxScrollExtent || countriesNotifier.value.isEmpty)) {
+      final List<Country>? countries = await ApiService().countries(
+        limit: limit,
+        offset: countriesNotifier.value.length,
+      );
 
       if (countries != null) {
         countriesNotifier.value = [...countriesNotifier.value, ...countries];
@@ -61,6 +64,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void dispose() {
+    pageController.dispose();
+    countriesScrollController.dispose();
+    favoritesScrollController.dispose();
+    pageNotifier.dispose();
+    tabNotifier.dispose();
+    countriesNotifier.dispose();
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final List<Widget> tabs = [
       TapScale(
@@ -81,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: false,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(CustomAppBar.height),
         child: ValueListenableBuilder(
@@ -135,7 +151,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemBuilder: (context, index) {
                   final Country? country = index < countries.length ? countries[index] : null;
 
-                  return CountryTile(country: country);
+                  return CountryTile(
+                    country: country,
+                    scrollController: countriesScrollController,
+                  );
                 },
               );
             },
@@ -176,7 +195,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: FutureBuilder(
                               future: ApiService().station(uuid: favorites[index]),
                               builder: (context, snapshot) {
-                                return StationTile(station: snapshot.data);
+                                return StationTile(
+                                  station: snapshot.data,
+                                  scrollController: favoritesScrollController,
+                                );
                               },
                             ),
                           );

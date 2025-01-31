@@ -1,4 +1,4 @@
-package com.snackva.radiostations.radiostations
+package com.snackva.radiostations
 
 import io.flutter.embedding.android.FlutterActivity
 

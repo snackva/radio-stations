@@ -8,7 +8,7 @@ import 'package:radiostations/theme.dart';
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final ScrollController? scrollController;
   final Widget content;
-  final List<AppBarButton> buttons;
+  final List<Widget> buttons;
 
   const CustomAppBar({
     super.key,
@@ -54,7 +54,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
   Widget build(BuildContext context) {
     return ClipRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16, tileMode: TileMode.mirror),
         child: ValueListenableBuilder(
           valueListenable: elevatedNotifier,
           builder: (context, elevated, child) {

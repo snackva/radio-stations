@@ -54,6 +54,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     playingController = AnimationController(
       duration: AppTheme.standardAnimationDuration,
       vsync: this,
+      value: 1,
     );
 
     player.setUrl(widget.station.streamUrl);
@@ -68,16 +69,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
       });
     });
 
-    player.icyMetadataStream.listen((metadata) {
-      // print all metadata
-      // print('title: ${metadata?.info?.title}');
-      // print('url: ${metadata?.info?.url}');
-      // print('genre: ${metadata?.headers?.genre}');
-      // print('bitrate: ${metadata?.headers?.bitrate}');
-      // print('name: ${metadata?.headers?.name}');
-      // print('isPublic: ${metadata?.headers?.isPublic}');
-    });
-
     super.initState();
   }
 
@@ -85,6 +76,8 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
   void dispose() {
     playingSubscription?.cancel();
     visualizerController.dispose();
+    playingController.dispose();
+    loadingNotifier.dispose();
     player.dispose();
 
     super.dispose();
@@ -93,6 +86,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: CustomAppBar(
         content: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -135,44 +129,62 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                       const double separatorWidth = 2;
                       final double visualizerWidth = (constraints.maxWidth - separatorWidth * (visualizerCount - 1)) / visualizerCount;
 
-                      return ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: 20,
-                        separatorBuilder: (context, index) => const SizedBox(width: separatorWidth),
-                        itemBuilder: (context, index) {
-                          final double animationShift = Random().nextDouble();
-                          final double maxHeight = lerpDouble(0.75, 1, Random().nextDouble())!;
-                          final double minHeight = lerpDouble(0.25, 0.5, Random().nextDouble())!;
+                      return ValueListenableBuilder(
+                        valueListenable: loadingNotifier,
+                        builder: (context, loading, child) {
+                          return AnimatedSwitcher(
+                            duration: const Duration(seconds: 1),
+                            transitionBuilder: (child, animation) {
+                              return FadeTransition(
+                                opacity: CurvedAnimation(
+                                  parent: animation,
+                                  curve: const Interval(0.5, 1, curve: Curves.easeOut),
+                                ),
+                                child: child,
+                              );
+                            },
+                            child: ListView.separated(
+                              key: ValueKey(loading),
+                              scrollDirection: Axis.horizontal,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: visualizerCount,
+                              separatorBuilder: (context, index) => const SizedBox(width: separatorWidth),
+                              itemBuilder: (context, index) {
+                                final double animationShift = loading ? (index / visualizerCount * 2 - 1).abs() : Random().nextDouble();
+                                final double maxHeight = loading ? 0.25 : lerpDouble(0.75, 1, Random().nextDouble())!;
+                                final double minHeight = loading ? 0 : lerpDouble(0.25, 0.5, Random().nextDouble())!;
 
-                          return Center(
-                            child: ListenableBuilder(
-                              listenable: Listenable.merge([playingController, visualizerController]),
-                              builder: (context, child) {
-                                double value = visualizerController.value + animationShift;
-                                value = value - value.toInt();
-                                value = (sin(value * 2 * pi) + 1) / 2;
+                                return Center(
+                                  child: ListenableBuilder(
+                                    listenable: Listenable.merge([playingController, visualizerController]),
+                                    builder: (context, child) {
+                                      double value = visualizerController.value - animationShift;
+                                      value = value - value.toInt();
+                                      value = (sin(value * 2 * pi) + 1) / 2;
 
-                                return SizedBox(
-                                  width: visualizerWidth,
-                                  height: lerpDouble(
-                                    visualizerWidth,
-                                    lerpDouble(
-                                      visualizerWidth,
-                                      constraints.maxHeight,
-                                      lerpDouble(minHeight, maxHeight, value)!,
+                                      return SizedBox(
+                                        width: visualizerWidth,
+                                        height: lerpDouble(
+                                          visualizerWidth,
+                                          lerpDouble(
+                                            visualizerWidth,
+                                            constraints.maxHeight,
+                                            lerpDouble(minHeight, maxHeight, value)!,
+                                          ),
+                                          (playingController.status == AnimationStatus.reverse ? AppTheme.standardAnimationCurve.flipped : AppTheme.standardAnimationCurve).transform(playingController.value),
+                                        )!,
+                                        child: child,
+                                      );
+                                    },
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.surfaceColor.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(visualizerWidth / 2),
+                                      ),
                                     ),
-                                    (playingController.status == AnimationStatus.reverse ? AppTheme.standardAnimationCurve.flipped : AppTheme.standardAnimationCurve).transform(playingController.value),
-                                  )!,
-                                  child: child,
+                                  ),
                                 );
                               },
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  color: AppTheme.surfaceColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(visualizerWidth / 2),
-                                ),
-                              ),
                             ),
                           );
                         },
