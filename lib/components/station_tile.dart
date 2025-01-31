@@ -79,7 +79,10 @@ class _StationTileState extends State<StationTile> {
                 RouterService().playerPage(
                   widget.station!,
                   FadeZoomTransitionArguments(
-                    child: StationTile(station: widget.station),
+                    child: StationTile(
+                      station: widget.station,
+                      scrollController: widget.scrollController,
+                    ),
                     offset: offset,
                     size: size,
                   ),

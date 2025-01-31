@@ -137,9 +137,13 @@ class _StationsScreenState extends State<StationsScreen> {
             },
             child: stations.isEmpty && !canFetchMoreStations
                 ? Center(
-                    child: Text(
-                      'No stations available',
-                      style: AppTheme.subtitleStyle,
+                    child: FractionallySizedBox(
+                      widthFactor: 0.5,
+                      child: Text(
+                        'No stations available',
+                        style: AppTheme.subtitleStyle.copyWith(color: AppTheme.surfaceColor.withOpacity(0.5)),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   )
                 : ListView.separated(
